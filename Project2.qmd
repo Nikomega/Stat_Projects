@@ -1,0 +1,77 @@
+---
+title: "Project2: Music and Memorization"
+format: 
+ html:
+  embed-resources: true
+editor: visual
+---
+
+# Do different types of music affect memorization?
+
+As a student, and an adept music listener, I was interested in the effects of different types of music in the retention of words, and thus concepts. Therefore, I made random sets of 10 simple words of 1-2 syllables and registered as the response variable how many of the ten words the test subjects retained after trying to memorize for 20 secs while listening to music, or without music.
+
+The factor levels for music are Lofi (relaxing music) "Hidden Treasure - EP" by Team Astro, no music, and Rock music "Back in Black" by AC/DC. Music is proven to either distract you or help you stay focused on tasks, therefore I wanted to prove if it affected the amount of words you can memorize in a short period of time. I had the hypothesis that Lofi would increase words memorized, while Rock would decrease it, and they are also my prefered music to listen to.
+
+I sat the test subjects down in a table, played the corresponding music in the background for 10 secs, then allowed them to see one of the sets of words for 20 secs, and after 5 secs asked them to say the words they remembered out loud. I would then register the amount of words they remembered. Afterwards I would repeat the process with another music and set of words. The order of music levels and set of words used where randomized while using a Latin Square to minimize bias by proficiency after repeating the exercise or nuance by the previous words memorized. The experiment was quick and easy to undertake, thus compliance was optimal.
+
+I chose to test 10 people, each giving me 3 observations. I choose this amount of replication since it would give me 30 observations and 10 observations for each music level, giving me an appropriate foundation for my analysis since it would allow me to apply the Central Limit Theorem. Furthermore, I did a power test to figure out if 10 subjects would be enough to see a difference of at least 3 words memorized.
+
+```{r}
+library(pwr4exp) 
+rbd_two_within <- designRCBD( treatments = 3,  label=list(Exercise=c("Lofi","No","Rock")), means = c(10,5,2),  blocks = 10, vcomp = 3,  sigma2 = 2 )
+
+pwr.anova(rbd_two_within)
+```
+
+```{r}
+library(tidyverse)
+
+Project2 <- read_csv("Project2.csv")
+
+#Data Wrangling
+
+Project2<- Project2|>
+  mutate(Blocks = as.factor(Project2$Subjects))|>
+  mutate(Music = factor(MusicLevel,
+                   levels = c("Lofi", "No", "Rock"),            
+                   labels = c("Lofi", "Silence", "Rock")))|>
+  select(Blocks,Music,WordsMem)
+
+
+class(Project2$Music)
+
+
+```
+
+```{r}
+library(ggplot2)
+ggplot(data = Project2, aes(x = Music,y=WordsMem,fill=factor(Music))) +
+  scale_fill_manual(values = c("lightblue","grey","red"),guide="none") +
+  geom_boxplot()+
+  labs(title= "Words Memorized by Background Music",
+       y= "Amount of Words Memorized out of 10") +
+  theme_minimal()
+```
+
+```{r}
+library(table1)
+table1(~ WordsMem | Music, data = Project2)
+```
+
+## Observations:
+
+We can observe that the 3 levels of music show a bell shaped distribution, a similar center and similar spread. We also observe an outlier in the Silence music level, a left skewness in the Lofi music level, and a right skewness in the Silence music level.
+
+```{r}
+Project2.aov<- aov(WordsMem ~ Blocks + Music, data= Project2)
+summary(Project2.aov)
+
+```
+
+## Conclusion:
+
+We conclude that there isn't a statistically significant relationship between type of music and amount of words memorized in a short period of time. We observe a p-value bigger than 0.1 and a F-statistic of 1.064.
+
+We observe that amount of words memorized is statistically significantly impacted by the person who takes the test, therefore I added it as a blocking variable to protect against bias.
+
+My hypothesis wasn't backed up by this experiment, but I believe that a more thorough experiment with a bigger sample size would reveal more. I would give more time before asking, and I would make them write the words down.
